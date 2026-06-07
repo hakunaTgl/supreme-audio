@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Supreme Audio — Neural Stem Separator</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0510;color:#f0e8ff;font-family:'Segoe UI',sans-serif;min-height:100vh}
+.header{background:linear-gradient(135deg,#1a0a2e,#0a0510);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #6d28d922}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:38px;height:38px;background:linear-gradient(135deg,#7c3aed,#db2777);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;box-shadow:0 0 16px #7c3aed44}
+.logo-text{font-size:1.15rem;font-weight:800;background:linear-gradient(90deg,#a78bfa,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.badges{display:flex;gap:8px;font-size:.72rem}
+.badge{background:#7c3aed22;border:1px solid #7c3aed44;border-radius:12px;padding:3px 10px;color:#a78bfa}
+.main{max-width:900px;margin:0 auto;padding:28px 20px}
+.upload-zone{background:linear-gradient(135deg,#110a1f,#0d1020);border:2px dashed #7c3aed44;border-radius:16px;padding:40px;text-align:center;margin-bottom:28px;cursor:pointer;transition:.3s;position:relative;overflow:hidden}
+.upload-zone::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,#7c3aed08,transparent);pointer-events:none}
+.upload-zone:hover{border-color:#a78bfa;background:linear-gradient(135deg,#150c24,#0f1228)}
+.upload-icon{font-size:2.5rem;margin-bottom:12px}
+.upload-title{font-size:1.1rem;font-weight:700;margin-bottom:6px}
+.upload-sub{font-size:.82rem;color:#6b7280}
+.upload-btn{background:linear-gradient(135deg,#7c3aed,#db2777);border:none;border-radius:8px;padding:10px 24px;color:#fff;cursor:pointer;font-size:.88rem;font-weight:600;margin-top:14px}
+.tracks{margin-bottom:28px}
+.track-label{font-size:.7rem;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.track-item{background:#110a1f;border:1px solid #1e1a2e;border-radius:12px;padding:16px;margin-bottom:10px;display:flex;align-items:center;gap:14px}
+.track-color{width:4px;height:48px;border-radius:2px;flex-shrink:0}
+.track-info{flex:1}
+.track-name{font-size:.88rem;font-weight:700;margin-bottom:4px}
+.track-meta{font-size:.72rem;color:#6b7280}
+.waveform{flex:2;height:40px;background:#0d0a18;border-radius:6px;overflow:hidden;position:relative}
+.waveform-bars{display:flex;align-items:center;justify-content:space-around;height:100%;padding:0 8px}
+.bar{width:2px;border-radius:1px;transition:.3s}
+.track-controls{display:flex;gap:8px;align-items:center}
+.play-btn{width:32px;height:32px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.85rem;transition:.2s}
+.vol-slider{width:70px;-webkit-appearance:none;height:3px;border-radius:2px;background:#1e1a2e;outline:none}
+.vol-slider::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#a78bfa;cursor:pointer}
+.process-section{background:#110a1f;border:1px solid #1e1a2e;border-radius:16px;padding:20px;margin-bottom:24px}
+.process-title{font-size:.9rem;font-weight:700;margin-bottom:14px;color:#a78bfa}
+.process-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.proc-item{background:#0d0a18;border:1px solid #1e1a2e;border-radius:8px;padding:12px;text-align:center;cursor:pointer;transition:.2s}
+.proc-item.active{border-color:#7c3aed;background:#7c3aed11}
+.proc-icon{font-size:1.5rem;margin-bottom:4px}
+.proc-name{font-size:.75rem;font-weight:600}
+.proc-status{font-size:.65rem;color:#6b7280;margin-top:2px}
+.proc-status.done{color:#22c55e}
+.progress-section{margin-bottom:8px}
+.prog-label{display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:4px}
+.prog-bar{height:6px;background:#1e1a2e;border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,#7c3aed,#db2777,#f59e0b);border-radius:3px;transition:width .5s}
+.export-row{display:flex;gap:10px;margin-top:16px}
+.exp-btn{flex:1;background:linear-gradient(135deg,#7c3aed,#db2777);border:none;border-radius:8px;padding:10px;color:#fff;cursor:pointer;font-size:.82rem;font-weight:600}
+.exp-btn.sec{background:#110a1f;border:1px solid #1e1a2e;color:#a78bfa}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">🎵</div>
+    <div class="logo-text">Supreme Audio</div>
+  </div>
+  <div class="badges">
+    <span class="badge">Neural AI</span>
+    <span class="badge">TensorFlow.js</span>
+    <span class="badge">Web Audio API</span>
+  </div>
+</div>
+<div class="main">
+  <div class="upload-zone" onclick="startProcess()">
+    <div class="upload-icon">🎧</div>
+    <div class="upload-title">Drop your audio track here</div>
+    <div class="upload-sub">MP3, WAV, FLAC • Up to 320kbps • Neural stem separation</div>
+    <button class="upload-btn">🚀 Upload & Analyze</button>
+  </div>
+  <div class="tracks">
+    <div class="track-label">Separated Stems</div>
+    <div class="track-item">
+      <div class="track-color" style="background:#a78bfa"></div>
+      <div class="track-info"><div class="track-name">🎹 Vocals</div><div class="track-meta">Isolated • 48kHz • Stereo</div></div>
+      <div class="waveform"><div class="waveform-bars" id="w1"></div></div>
+      <div class="track-controls">
+        <button class="play-btn" style="background:linear-gradient(135deg,#7c3aed,#a855f7)" onclick="togglePlay(this)">▶</button>
+        <input type="range" class="vol-slider" value="80" min="0" max="100">
+      </div>
+    </div>
+    <div class="track-item">
+      <div class="track-color" style="background:#f472b6"></div>
+      <div class="track-info"><div class="track-name">🥁 Drums</div><div class="track-meta">Isolated • 48kHz • Stereo</div></div>
+      <div class="waveform"><div class="waveform-bars" id="w2"></div></div>
+      <div class="track-controls">
+        <button class="play-btn" style="background:linear-gradient(135deg,#db2777,#f472b6)" onclick="togglePlay(this)">▶</button>
+        <input type="range" class="vol-slider" value="75" min="0" max="100">
+      </div>
+    </div>
+    <div class="track-item">
+      <div class="track-color" style="background:#34d399"></div>
+      <div class="track-info"><div class="track-name">🎸 Bass</div><div class="track-meta">Isolated • 48kHz • Stereo</div></div>
+      <div class="waveform"><div class="waveform-bars" id="w3"></div></div>
+      <div class="track-controls">
+        <button class="play-btn" style="background:linear-gradient(135deg,#059669,#34d399)" onclick="togglePlay(this)">▶</button>
+        <input type="range" class="vol-slider" value="70" min="0" max="100">
+      </div>
+    </div>
+    <div class="track-item">
+      <div class="track-color" style="background:#fbbf24"></div>
+      <div class="track-info"><div class="track-name">🎷 Other Instruments</div><div class="track-meta">Isolated • 48kHz • Stereo</div></div>
+      <div class="waveform"><div class="waveform-bars" id="w4"></div></div>
+      <div class="track-controls">
+        <button class="play-btn" style="background:linear-gradient(135deg,#d97706,#fbbf24)" onclick="togglePlay(this)">▶</button>
+        <input type="range" class="vol-slider" value="65" min="0" max="100">
+      </div>
+    </div>
+  </div>
+  <div class="process-section">
+    <div class="process-title">🧠 AI Processing Pipeline</div>
+    <div class="process-grid">
+      <div class="proc-item active"><div class="proc-icon">📥</div><div class="proc-name">Input Decode</div><div class="proc-status done">Done</div></div>
+      <div class="proc-item active"><div class="proc-icon">🧠</div><div class="proc-name">Neural Model</div><div class="proc-status done">Done</div></div>
+      <div class="proc-item active"><div class="proc-icon">✂️</div><div class="proc-name">Stem Separation</div><div class="proc-status done">Done</div></div>
+      <div class="proc-item"><div class="proc-icon">📤</div><div class="proc-name">Export Render</div><div class="proc-status">Ready</div></div>
+    </div>
+    <div class="progress-section">
+      <div class="prog-label"><span>Processing complete</span><span id="pct">100%</span></div>
+      <div class="prog-bar"><div class="prog-fill" id="pfill" style="width:100%"></div></div>
+    </div>
+    <div class="export-row">
+      <button class="exp-btn">📥 Export All Stems (ZIP)</button>
+      <button class="exp-btn">🎶 Remix in Editor</button>
+      <button class="exp-btn sec">⚙️ Settings</button>
+    </div>
+  </div>
+</div>
+<script>
+const colors=['#a78bfa','#f472b6','#34d399','#fbbf24'];
+['w1','w2','w3','w4'].forEach((id,ci)=>{
+  const el=document.getElementById(id);
+  for(let i=0;i<40;i++){
+    const b=document.createElement('div');b.className='bar';
+    const h=Math.random()*30+5;
+    b.style.cssText=`height:${h}px;background:${colors[ci]};opacity:.7;`;
+    el.appendChild(b);
+  }
+});
+setInterval(()=>{
+  document.querySelectorAll('.waveform-bars').forEach((wb,ci)=>{
+    wb.querySelectorAll('.bar').forEach(b=>{
+      b.style.height=(Math.random()*30+5)+'px';
+      b.style.opacity=(Math.random()*0.4+0.5);
+    });
+  });
+},400);
+function togglePlay(btn){btn.textContent=btn.textContent==='▶'?'⏸':'▶';}
+function startProcess(){
+  const pf=document.getElementById('pfill'),pc=document.getElementById('pct');
+  let v=0;pf.style.width='0%';pc.textContent='0%';
+  const iv=setInterval(()=>{v+=2;pf.style.width=v+'%';pc.textContent=v+'%';if(v>=100)clearInterval(iv);},50);
+}
+</script>
+</body>
+</html>
